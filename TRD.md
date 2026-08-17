@@ -4,7 +4,7 @@
 
 ### 1.1 목적
 
-이 문서는 승인된 `PRD.md`를 구현하기 위한 기술 구조, 컴포넌트 책임, 프론트엔드와 백엔드 간 OpenAPI 계약, NEIS 연동 방식, 실행 환경 및 테스트 전략을 정의한다.
+이 문서는 승인된 `PRD.md`를 구현하기 위한 기술 구조, 컴포넌트 책임, 프론트엔드와 백엔드 간 OpenAPI 계약, NEIS 및 MCP 연동 방식, 실행 환경 및 테스트 전략을 정의한다.
 
 ### 1.2 기술 목표
 
@@ -21,11 +21,15 @@ flowchart LR
     U[사용자 브라우저]
     F[React 프론트엔드]
     B[FastAPI 백엔드]
+    M[MCP 서버]
     N[NEIS 공개 API]
+    A[AI 에이전트]
 
     U --> F
     F -->|/api/v1<br/>src/openapi.json| B
     B -->|HTTPS<br/>data/openapi.json| N
+    A -->|Streamable HTTP| M
+    M -->|HTTPS<br/>data/openapi.json| N
 ```
 
 ### 2.1 구성 요소
@@ -34,9 +38,10 @@ flowchart LR
 |---|---|
 | React 프론트엔드 | 화면 렌더링, 사용자 입력 검증, 조회·배틀 흐름 및 상태 관리, 접근성 제공 |
 | FastAPI 백엔드 | 내부 REST API 제공, 입력 검증, NEIS API 호출, 응답 정규화, 오류 변환 |
+| MCP 서버 | AI 에이전트용 학교 검색 및 중식 조회 도구 제공, MCP 오류 변환 |
 | `src/openapi.json` | 프론트엔드와 백엔드 사이의 내부 API 계약 |
 | `data/openapi.json` | 백엔드와 NEIS 공개 API 사이의 외부 API 계약 |
-| Docker Compose | 프론트엔드와 백엔드의 빌드, 네트워크 및 실행 환경 오케스트레이션 |
+| Docker Compose | 프론트엔드, 백엔드와 MCP 서버의 빌드, 네트워크 및 실행 환경 오케스트레이션 |
 
 ### 2.2 통신 원칙
 
@@ -108,6 +113,8 @@ React DayPicker는 급식 조회 화면에서 `range` 모드의 Date Range Picke
 - 백엔드는 Python slim 이미지에 `uv`를 설치하고 비루트 사용자로 실행한다.
 - 백엔드 이미지 빌드 시 `pyproject.toml`과 `uv.lock`을 먼저 복사한 뒤 `uv sync --frozen --no-dev`로 잠긴 런타임 의존성만 설치한다.
 - NEIS API 키는 백엔드 컨테이너에만 환경 변수로 주입한다.
+- MCP 서버는 `src/mcp`의 독립 uv 프로젝트이며 공식 Python MCP SDK `mcp>=1.28,<2`를 사용한다.
+- MCP 서버는 `/mcp`에서 stateless Streamable HTTP를 제공하며 NEIS API 키는 MCP 컨테이너에도 환경 변수로 주입한다.
 
 ## 4. 프론트엔드 설계
 
@@ -693,12 +700,14 @@ GET /api/v1/meals?educationOfficeCode=B10&schoolCode=7010536&from=2026-08-17&to=
 |---|---:|---:|---|
 | `frontend` | 80 | 3000 | `backend` |
 | `backend` | 8000 | 8000 | 없음 |
+| `mcp` | 8000 | 8001 | 없음 |
 
-- 두 서비스는 전용 Compose 네트워크에서 서비스 이름으로 통신한다.
+- 세 서비스는 전용 Compose 네트워크에서 서비스 이름으로 통신한다.
 - 프론트엔드 Nginx는 `/api`를 `http://backend:8000`으로 프록시한다.
 - 백엔드 healthcheck는 `/api/v1/health`를 사용한다.
 - 프론트엔드는 백엔드 healthcheck가 성공한 후 시작한다.
 - 백엔드 이미지는 `uv.lock`, 프론트엔드 이미지는 해당 패키지 관리자의 잠금 파일을 사용해 재현 가능하게 빌드한다.
+- MCP 이미지는 `src/mcp/uv.lock`을 사용하며 `search_schools`와 `get_lunch_meals` 도구를 노출한다.
 
 ## 11. 테스트 전략
 
@@ -771,7 +780,13 @@ GET /api/v1/meals?educationOfficeCode=B10&schoolCode=7010536&from=2026-08-17&to=
 - 모든 오류가 `ErrorResponse` 계약을 준수
 - API 키가 응답과 로그에 노출되지 않음
 
-### 11.4 OpenAPI 계약 테스트
+### 11.4 MCP 서버 테스트
+
+- 공식 SDK의 인메모리 클라이언트 세션으로 도구 목록과 도구 호출 계약을 검증한다.
+- RESPX로 NEIS 학교·중식 요청 파라미터와 중식 코드 `MMEAL_SC_CODE=2`를 검증한다.
+- 입력 오류, 검색 및 급식 데이터 없음, NEIS 오류와 타임아웃이 `isError=true`인 안전한 도구 오류로 반환되는지 검증한다.
+
+### 11.5 OpenAPI 계약 테스트
 
 | 도구 | 역할 |
 |---|---|
@@ -781,7 +796,7 @@ GET /api/v1/meals?educationOfficeCode=B10&schoolCode=7010536&from=2026-08-17&to=
 
 CI는 FastAPI가 노출하는 OpenAPI 문서와 `src/openapi.json`의 경로, method, 상태 코드 및 schema 차이를 검사한다. 계약 변경 시 명세, 백엔드 응답 모델, 생성된 프론트엔드 타입과 관련 테스트를 한 변경 단위로 갱신한다.
 
-### 11.5 E2E 테스트
+### 11.6 E2E 테스트
 
 | 도구 | 역할 |
 |---|---|
@@ -809,8 +824,9 @@ E2E 환경의 백엔드는 실제 NEIS 대신 결정적인 fixture를 반환하�
 3. 프론트엔드 TypeScript 타입 검사와 통합 테스트를 실행한다.
 4. `uv sync --frozen --all-groups`로 백엔드 환경을 동기화한다.
 5. `uv run`으로 백엔드 정적 검사와 단위·통합 테스트를 실행한다.
-6. 프론트엔드 및 백엔드 컨테이너 이미지를 빌드한다.
-7. Docker Compose 환경에서 Playwright E2E 테스트를 실행한다.
+6. `src/mcp`의 잠긴 의존성을 동기화하고 MCP 단위·통합 테스트를 실행한다.
+7. 프론트엔드, 백엔드 및 MCP 컨테이너 이미지를 빌드한다.
+8. Docker Compose 환경에서 Playwright E2E 테스트를 실행한다.
 
 한 단계라도 실패하면 이후 배포 단계로 진행하지 않는다.
 
@@ -830,3 +846,4 @@ E2E 환경의 백엔드는 실제 NEIS 대신 결정적인 fixture를 반환하�
 | 점수·승자 미표시 | 응답 계약에 점수와 승자 필드 없음 |
 | 모바일 및 접근성 | 반응형 CSS, Fluent UI, React DayPicker, RTL 및 Playwright 검사 |
 | 오류 상태 구분 | 공통 `ErrorResponse`, 안정적인 오류 코드, request ID |
+| AI 에이전트의 급식 조회 | Streamable HTTP MCP 서버의 `search_schools`, `get_lunch_meals` 도구 |

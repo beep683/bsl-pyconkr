@@ -98,6 +98,21 @@ uv run --project backend pytest
 - [MCP Inspector](https://github.com/modelcontextprotocol/inspector)
 - [Microsoft Agent Framework](https://aka.ms/agentframework)
 
+## MCP 서버 실행
+
+공식 Python MCP SDK 1.x 기반의 Streamable HTTP 서버는 `src/mcp`에 있습니다.
+
+```bash
+cd src/mcp
+uv sync --extra dev
+NEIS_API_KEY=<발급받은 키> uv run school-lunch-mcp
+```
+
+Windows PowerShell에서는 환경 변수를 `$env:NEIS_API_KEY="<발급받은 키>"`로 설정합니다.
+MCP Inspector는 `npx -y @modelcontextprotocol/inspector`로 실행하고
+`http://localhost:8000/mcp`에 연결합니다. Docker Compose로 실행할 때는
+`http://localhost:8001/mcp`를 사용합니다.
+
 ## 프로젝트 안내
 
 - 질문이나 도움이 필요하면 [지원 안내](SUPPORT.md)를 확인하세요.
