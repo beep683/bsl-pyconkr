@@ -1,4 +1,7 @@
+import asyncio
+import random
 import unicodedata
+from collections import defaultdict
 from datetime import date
 
 from .errors import AppError
@@ -19,8 +22,13 @@ def parse_date(value: str, field_name: str) -> date:
 
 
 class LunchService:
-    def __init__(self, client: NeisClient) -> None:
+    def __init__(
+        self,
+        client: NeisClient,
+        random_source: random.Random | random.SystemRandom | None = None,
+    ) -> None:
         self.client = client
+        self.random = random_source or random.SystemRandom()
 
     async def search_schools(self, query: str, page_size: int) -> SchoolSearchResult:
         normalized = unicodedata.normalize("NFKC", query).strip()
@@ -39,6 +47,50 @@ class LunchService:
             schools=[map_school(row) for row in rows],
             total_count=total,
         )
+
+    async def get_random_schools(self, count: int) -> SchoolSearchResult:
+        if not 2 <= count <= 20:
+            raise AppError("INVALID_COUNT", "학교 후보 수는 2~20이어야 합니다.")
+        first_rows, total = await self.client.list_schools(1, 100)
+        if total < count:
+            raise AppError(
+                "INSUFFICIENT_SCHOOLS",
+                f"학교 후보 {count}곳을 준비할 수 없습니다.",
+            )
+
+        selected_indexes = sorted(self.random.sample(range(total), count))
+        rows_by_index = {index: row for index, row in enumerate(first_rows)}
+        pages: dict[int, list[int]] = defaultdict(list)
+        for index in selected_indexes:
+            if index not in rows_by_index:
+                pages[index // 100 + 1].append(index)
+
+        if pages:
+            page_numbers = sorted(pages)
+            page_results = await asyncio.gather(
+                *(self.client.list_schools(page, 100) for page in page_numbers)
+            )
+            for page, (rows, _) in zip(page_numbers, page_results, strict=True):
+                offset = (page - 1) * 100
+                rows_by_index.update(
+                    (offset + row_index, row)
+                    for row_index, row in enumerate(rows)
+                )
+
+        try:
+            schools = [map_school(rows_by_index[index]) for index in selected_indexes]
+        except KeyError as exc:
+            raise AppError(
+                "NEIS_INVALID_RESPONSE",
+                "NEIS 학교 목록이 요청한 후보를 포함하지 않습니다.",
+            ) from exc
+        unique = {school.school_code: school for school in schools}
+        if len(unique) != count:
+            raise AppError(
+                "NEIS_INVALID_RESPONSE",
+                "서로 다른 학교 후보를 준비하지 못했습니다.",
+            )
+        return SchoolSearchResult(schools=list(unique.values()), total_count=total)
 
     async def get_lunch_meals(
         self,

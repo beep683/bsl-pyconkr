@@ -55,6 +55,18 @@ uv run --project backend uvicorn app.main:app --reload
 uv run --project backend pytest
 ```
 
+급식 분석은 기존 백엔드와 분리된 `src/agent` 서비스가 담당합니다. MCP 서버에서
+급식 데이터를 가져와 Microsoft Agent Framework의 Concurrent 워크플로우로 세 영역을
+병렬 평가하고, GitHub Copilot SDK를 모델 공급자로 사용합니다.
+
+```powershell
+uv sync --project src/agent --extra dev --extra devui
+uv run --project src/agent uvicorn app.main:app --reload --port 8002
+```
+
+Copilot CLI 로그인이 필요하며 모델은 `GITHUB_COPILOT_MODEL`로 선택합니다. 개발용
+DevUI는 `uv run --project src/agent python -m app.devui`로 실행합니다.
+
 > [!TIP]
 > 바로 시작하려면 [이 템플릿으로 새 저장소를 만드세요](https://github.com/new?template_name=battle-school-lunch-workshop&template_owner=devkimchi).
 

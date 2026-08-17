@@ -29,12 +29,51 @@ services:
       NEIS_TIMEOUT_SECONDS: ${NEIS_TIMEOUT_SECONDS:-5}
     ports:
       - "8001:8000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import socket; socket.create_connection(('127.0.0.1', 8000), timeout=2).close()",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  agent:
+    build:
+      context: .
+      dockerfile: src/agent/Dockerfile
+    environment:
+      MCP_URL: http://mcp:8000/mcp
+      GITHUB_COPILOT_MODEL: ${GITHUB_COPILOT_MODEL:-gpt-5-mini}
+      GITHUB_COPILOT_TIMEOUT: ${GITHUB_COPILOT_TIMEOUT:-180}
+      GH_TOKEN: ${GH_TOKEN:-}
+    depends_on:
+      mcp:
+        condition: service_healthy
+    ports:
+      - "8002:8000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')",
+        ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
 
   frontend:
     build:
       context: ./frontend
     depends_on:
       backend:
+        condition: service_healthy
+      agent:
         condition: service_healthy
     ports:
       - "3000:80"

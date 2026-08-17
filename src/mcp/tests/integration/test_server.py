@@ -93,7 +93,11 @@ async def test_lists_and_calls_tools_with_neis(client_session: ClientSession) ->
         },
     )
 
-    assert {tool.name for tool in tools.tools} == {"search_schools", "get_lunch_meals"}
+    assert {tool.name for tool in tools.tools} == {
+        "search_schools",
+        "get_random_schools",
+        "get_lunch_meals",
+    }
     assert search_result.isError is False
     assert search_result.structuredContent["schools"][0]["name"] == "예시고등학교"
     assert meal_result.isError is False

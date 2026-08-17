@@ -15,7 +15,8 @@ def create_server(service: LunchService | None = None) -> FastMCP:
         "school-lunch",
         instructions=(
             "NEIS 공개 데이터를 사용해 학교를 검색하고 학교별 중식 정보를 조회합니다. "
-            "먼저 search_schools로 식별 코드를 확인한 뒤 get_lunch_meals를 호출하세요."
+            "search_schools 또는 get_random_schools로 학교 식별 코드를 확인한 뒤 "
+            "get_lunch_meals를 호출하세요."
         ),
         host=os.getenv("MCP_HOST", "127.0.0.1"),
         port=int(os.getenv("MCP_PORT", "8000")),
@@ -32,6 +33,14 @@ def create_server(service: LunchService | None = None) -> FastMCP:
         """학교 이름 일부로 후보 학교와 교육청·학교 식별 정보를 조회합니다."""
         try:
             return await get_service().search_schools(query, page_size)
+        except AppError as exc:
+            raise ToolError(f"{exc.code}: {exc.message}") from exc
+
+    @server.tool()
+    async def get_random_schools(count: int = 10) -> SchoolSearchResult:
+        """전국 학교 중 서로 다른 후보를 무작위로 반환합니다."""
+        try:
+            return await get_service().get_random_schools(count)
         except AppError as exc:
             raise ToolError(f"{exc.code}: {exc.message}") from exc
 
