@@ -1,0 +1,574 @@
+{
+  "openapi": "3.0.4",
+  "info": {
+    "title": "NEIS ???? ?? ?? API",
+    "description": "NEIS(?????????) ???? ?? ???? ???? ?? API ?????.",
+    "version": "1.0.0",
+    "contact": {
+      "url": "https://open.neis.go.kr/"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://open.neis.go.kr/hub",
+      "description": "NEIS ???? ?? ??"
+    }
+  ],
+  "paths": {
+    "/schoolInfo": {
+      "get": {
+        "summary": "?????? ??",
+        "description": "??? ????? ?????. ?? ?? ??: ????",
+        "operationId": "getSchoolInfo",
+        "parameters": [
+          {
+            "name": "Key",
+            "in": "query",
+            "required": true,
+            "description": "???. ???: sample key",
+            "schema": {
+              "type": "string",
+              "default": "sample"
+            }
+          },
+          {
+            "name": "Type",
+            "in": "query",
+            "required": true,
+            "description": "?? ?? ?? (xml, json). ???: xml",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "xml",
+                "json"
+              ],
+              "default": "json"
+            }
+          },
+          {
+            "name": "pIndex",
+            "in": "query",
+            "required": true,
+            "description": "??? ??. ???: 1 (sample key? 1 ??)",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "pSize",
+            "in": "query",
+            "required": true,
+            "description": "??? ? ?? ??. ???: 100 (sample key? 5 ??)",
+            "schema": {
+              "type": "integer",
+              "default": 100
+            }
+          },
+          {
+            "name": "ATPT_OFCDC_SC_CODE",
+            "in": "query",
+            "required": false,
+            "description": "???????. ??? ???? ????? ????",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SD_SCHUL_CODE",
+            "in": "query",
+            "required": false,
+            "description": "??????. ?? ??? ????? ??? ????",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SCHUL_NM",
+            "in": "query",
+            "required": false,
+            "description": "???. ??? ??",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SCHUL_KND_SC_NM",
+            "in": "query",
+            "required": false,
+            "description": "?????. ??? ??",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "LCTN_SC_NM",
+            "in": "query",
+            "required": false,
+            "description": "???. ??? ???? ?? ?????? ??? ??",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "FOND_SC_NM",
+            "in": "query",
+            "required": false,
+            "description": "???. ??? ????? ?? ??",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "?? ???????.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "schoolInfo": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "head": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "list_total_count": {
+                                  "type": "integer",
+                                  "description": "? ??? ??"
+                                },
+                                "RESULT": {
+                                  "type": "object",
+                                  "properties": {
+                                    "CODE": {
+                                      "type": "string",
+                                      "description": "?? ??"
+                                    },
+                                    "MESSAGE": {
+                                      "type": "string",
+                                      "description": "?? ???"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          },
+                          "row": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "ATPT_OFCDC_SC_CODE": {
+                                  "type": "string",
+                                  "description": "???????. ??? ???? ????? ????"
+                                },
+                                "ATPT_OFCDC_SC_NM": {
+                                  "type": "string",
+                                  "description": "??????. ??? ???? ????? ??"
+                                },
+                                "SD_SCHUL_CODE": {
+                                  "type": "string",
+                                  "description": "??????"
+                                },
+                                "SCHUL_NM": {
+                                  "type": "string",
+                                  "description": "???. ??? ??"
+                                },
+                                "ENG_SCHUL_NM": {
+                                  "type": "string",
+                                  "description": "?????. ??? ????"
+                                },
+                                "SCHUL_KND_SC_NM": {
+                                  "type": "string",
+                                  "description": "?????. ??? ??"
+                                },
+                                "LCTN_SC_NM": {
+                                  "type": "string",
+                                  "description": "???. ??? ???? ?? ?????? ??? ??"
+                                },
+                                "JU_ORG_NM": {
+                                  "type": "string",
+                                  "description": "?????. ??? ???? ?? ??? ?? ?????"
+                                },
+                                "FOND_SC_NM": {
+                                  "type": "string",
+                                  "description": "???. ??? ????? ?? ??"
+                                },
+                                "ORG_RDNZC": {
+                                  "type": "string",
+                                  "description": "???????"
+                                },
+                                "ORG_RDNMA": {
+                                  "type": "string",
+                                  "description": "?????"
+                                },
+                                "ORG_RDNDA": {
+                                  "type": "string",
+                                  "description": "???????"
+                                },
+                                "ORG_TELNO": {
+                                  "type": "string",
+                                  "description": "????"
+                                },
+                                "HMPG_ADRES": {
+                                  "type": "string",
+                                  "description": "??????"
+                                },
+                                "COEDU_SC_NM": {
+                                  "type": "string",
+                                  "description": "???????"
+                                },
+                                "ORG_FAXNO": {
+                                  "type": "string",
+                                  "description": "????"
+                                },
+                                "HS_SC_NM": {
+                                  "type": "string",
+                                  "description": "???????"
+                                },
+                                "INDST_SPECL_CCCCL_EXST_YN": {
+                                  "type": "string",
+                                  "description": "???????????"
+                                },
+                                "HS_GNRL_BUSNS_SC_NM": {
+                                  "type": "string",
+                                  "description": "???????????"
+                                },
+                                "SPCLY_PURPS_HS_ORD_NM": {
+                                  "type": "string",
+                                  "description": "???????????"
+                                },
+                                "ENE_BFE_SEHF_SC_NM": {
+                                  "type": "string",
+                                  "description": "????????"
+                                },
+                                "DGHT_SC_NM": {
+                                  "type": "string",
+                                  "description": "?????"
+                                },
+                                "FOND_YMD": {
+                                  "type": "string",
+                                  "description": "????"
+                                },
+                                "FOAS_MEMRD": {
+                                  "type": "string",
+                                  "description": "?????"
+                                },
+                                "LOAD_DTM": {
+                                  "type": "string",
+                                  "description": "????"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "?? ??",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "?? ??",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/mealServiceDietInfo": {
+      "get": {
+        "summary": "?????? ??",
+        "description": "??? ??????? ?????. ?? ?? ??: ????",
+        "operationId": "getMealServiceDietInfo",
+        "parameters": [
+          {
+            "name": "Key",
+            "in": "query",
+            "required": true,
+            "description": "???. ???: sample key",
+            "schema": {
+              "type": "string",
+              "default": "sample"
+            }
+          },
+          {
+            "name": "Type",
+            "in": "query",
+            "required": true,
+            "description": "?? ?? ?? (xml, json). ???: xml",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "xml",
+                "json"
+              ],
+              "default": "json"
+            }
+          },
+          {
+            "name": "pIndex",
+            "in": "query",
+            "required": true,
+            "description": "??? ??. ???: 1 (sample key? 1 ??)",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "pSize",
+            "in": "query",
+            "required": true,
+            "description": "??? ? ?? ??. ???: 100 (sample key? 5 ??)",
+            "schema": {
+              "type": "integer",
+              "default": 100
+            }
+          },
+          {
+            "name": "ATPT_OFCDC_SC_CODE",
+            "in": "query",
+            "required": true,
+            "description": "???????. ?????????",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SD_SCHUL_CODE",
+            "in": "query",
+            "required": true,
+            "description": "??????. ??????",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "MMEAL_SC_CODE",
+            "in": "query",
+            "required": false,
+            "description": "????. ??????",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "MLSV_YMD",
+            "in": "query",
+            "required": false,
+            "description": "???? (YYYYMMDD)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "MLSV_FROM_YMD",
+            "in": "query",
+            "required": false,
+            "description": "?????? (YYYYMMDD)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "MLSV_TO_YMD",
+            "in": "query",
+            "required": false,
+            "description": "?????? (YYYYMMDD)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "?? ???????.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mealServiceDietInfo": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "head": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "list_total_count": {
+                                  "type": "integer",
+                                  "description": "? ??? ??"
+                                },
+                                "RESULT": {
+                                  "type": "object",
+                                  "properties": {
+                                    "CODE": {
+                                      "type": "string",
+                                      "description": "?? ??"
+                                    },
+                                    "MESSAGE": {
+                                      "type": "string",
+                                      "description": "?? ???"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          },
+                          "row": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "ATPT_OFCDC_SC_CODE": {
+                                  "type": "string",
+                                  "description": "???????. ?????????"
+                                },
+                                "ATPT_OFCDC_SC_NM": {
+                                  "type": "string",
+                                  "description": "??????. ????????"
+                                },
+                                "SD_SCHUL_CODE": {
+                                  "type": "string",
+                                  "description": "??????"
+                                },
+                                "SCHUL_NM": {
+                                  "type": "string",
+                                  "description": "???"
+                                },
+                                "MMEAL_SC_CODE": {
+                                  "type": "string",
+                                  "description": "????. ??????"
+                                },
+                                "MMEAL_SC_NM": {
+                                  "type": "string",
+                                  "description": "???. ?????"
+                                },
+                                "MLSV_YMD": {
+                                  "type": "string",
+                                  "description": "????"
+                                },
+                                "MLSV_FGR": {
+                                  "type": "string",
+                                  "description": "?????"
+                                },
+                                "DDISH_NM": {
+                                  "type": "string",
+                                  "description": "???"
+                                },
+                                "ORPLC_INFO": {
+                                  "type": "string",
+                                  "description": "?????"
+                                },
+                                "CAL_INFO": {
+                                  "type": "string",
+                                  "description": "?????"
+                                },
+                                "NTR_INFO": {
+                                  "type": "string",
+                                  "description": "????"
+                                },
+                                "MLSV_FROM_YMD": {
+                                  "type": "string",
+                                  "description": "??????"
+                                },
+                                "MLSV_TO_YMD": {
+                                  "type": "string",
+                                  "description": "??????"
+                                },
+                                "LOAD_DTM": {
+                                  "type": "string",
+                                  "description": "????. ????"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "?? ??",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "?? ??",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ErrorResponse": {
+        "type": "object",
+        "description": "API ?? ??",
+        "properties": {
+          "RESULT": {
+            "type": "object",
+            "properties": {
+              "CODE": {
+                "type": "string",
+                "description": "?? ??. 300: ?? ? ??, 290: ??? ??, 310: ??? ??, 333: ???? ?? ??, 336: ?? ?? ??, 337: ?? ??? ??, 500: ?? ??, 600: DB ?? ??, 601: SQL ??"
+              },
+              "MESSAGE": {
+                "type": "string",
+                "description": "?? ???"
+              }
+            }
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "apiKey": {
+        "type": "apiKey",
+        "in": "query",
+        "name": "Key",
+        "description": "NEIS ???? ?? ???? ???? ???"
+      }
+    }
+  }
+}
