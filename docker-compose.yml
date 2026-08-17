@@ -20,6 +20,16 @@ services:
       timeout: 3s
       retries: 5
 
+  mcp:
+    build:
+      context: ./src/mcp
+    environment:
+      NEIS_API_KEY: ${NEIS_API_KEY:-sample}
+      NEIS_BASE_URL: ${NEIS_BASE_URL:-https://open.neis.go.kr/hub}
+      NEIS_TIMEOUT_SECONDS: ${NEIS_TIMEOUT_SECONDS:-5}
+    ports:
+      - "8001:8000"
+
   frontend:
     build:
       context: ./frontend
