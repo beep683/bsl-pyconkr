@@ -82,6 +82,25 @@ jobs:
         working-directory: src/mcp
         run: uv run pytest
 
+  agent:
+    name: Agent
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          cache-dependency-glob: src/agent/uv.lock
+      - name: Install dependencies
+        working-directory: src/agent
+        run: uv sync --extra dev --locked
+      - name: Test
+        working-directory: src/agent
+        run: uv run pytest
+
   compose:
     name: Docker Compose
     runs-on: ubuntu-latest

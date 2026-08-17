@@ -115,6 +115,18 @@ class NeisClient:
         except NeisNoData:
             return [], 0
 
+    async def list_schools(
+        self, page: int, page_size: int
+    ) -> tuple[list[dict[str, Any]], int]:
+        try:
+            data = await self._request(
+                "/schoolInfo",
+                {"pIndex": page, "pSize": page_size},
+            )
+            return self._rows(data, "schoolInfo")
+        except NeisNoData:
+            return [], 0
+
     async def get_school(self, office_code: str, school_code: str) -> dict[str, Any]:
         try:
             data = await self._request(

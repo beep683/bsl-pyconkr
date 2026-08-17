@@ -29,7 +29,8 @@ body {
 }
 
 button,
-input {
+input,
+textarea {
   font: inherit;
 }
 
@@ -52,12 +53,21 @@ input {
   text-decoration: none;
 }
 
+.app-header nav {
+  display: flex;
+  gap: 1rem;
+}
+
 .app-header nav a {
-  border-bottom: 3px solid var(--orange);
+  border-bottom: 3px solid transparent;
   color: var(--ink);
   font-weight: 700;
   padding: 0.85rem 0.25rem;
   text-decoration: none;
+}
+
+.app-header nav a[aria-current="page"] {
+  border-bottom-color: var(--orange);
 }
 
 main {
@@ -366,6 +376,110 @@ summary {
   margin: 1.5rem 0;
 }
 
+.analysis-hero {
+  padding: 2rem 0 1rem;
+}
+
+.candidate-grid,
+.score-grid,
+.evaluation-grid {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.candidate-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.candidate-card {
+  background: var(--white);
+  border: 2px solid var(--line);
+  border-radius: 1rem;
+  color: var(--ink);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-height: 7rem;
+  padding: 1rem;
+  text-align: left;
+}
+
+.candidate-card span {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.candidate-card:hover,
+.candidate-card:focus-visible,
+.candidate-card.selected {
+  border-color: var(--orange);
+}
+
+.candidate-card.selected {
+  background: #fff1cd;
+}
+
+.setup-card input[type="date"],
+.setup-card textarea {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 0.65rem;
+  display: block;
+  margin-bottom: 1.25rem;
+  padding: 0.8rem;
+  width: 100%;
+}
+
+.analysis-results {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 1.5rem;
+  margin-top: 1.25rem;
+  padding: clamp(1.2rem, 4vw, 2rem);
+}
+
+.score-grid,
+.evaluation-grid {
+  margin-top: 1.25rem;
+}
+
+.score-card,
+.evaluation-card,
+.judge-card {
+  border: 1px solid var(--line);
+  padding: 1.25rem;
+}
+
+.total-score {
+  color: var(--orange-dark);
+  display: block;
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.score-card dl div {
+  border-top: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  padding: 0.65rem 0;
+}
+
+.score-card dd {
+  font-weight: 800;
+  margin: 0;
+}
+
+.evaluation-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.judge-card {
+  background: #fff8e8;
+  margin-top: 1rem;
+}
+
 footer {
   background: #38261d;
   color: #fff4df;
@@ -393,6 +507,12 @@ footer {
   }
 
   .meal-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .candidate-grid,
+  .score-grid,
+  .evaluation-grid {
     grid-template-columns: 1fr;
   }
 

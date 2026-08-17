@@ -19,6 +19,7 @@ import {
   type School,
   type SchoolSearchResponse,
 } from "./api/types";
+import AnalysisPage from "./analysis/AnalysisPage";
 import { getAllowedDates, getInitialRange, toDateString } from "./datePolicy";
 import "./styles.css";
 
@@ -385,6 +386,7 @@ function MealsPage() {
 }
 
 export default function App() {
+  const analysisPage = window.location.pathname === "/analysis";
   return (
     <FluentProvider theme={webLightTheme}>
       <header className="app-header">
@@ -392,12 +394,15 @@ export default function App() {
           <span aria-hidden="true">🏆</span> 급식 배틀
         </a>
         <nav aria-label="주요 메뉴">
-          <a href="/" aria-current="page">
+          <a href="/" aria-current={analysisPage ? undefined : "page"}>
             급식 조회
+          </a>
+          <a href="/analysis" aria-current={analysisPage ? "page" : undefined}>
+            급식 분석
           </a>
         </nav>
       </header>
-      <MealsPage />
+      {analysisPage ? <AnalysisPage /> : <MealsPage />}
       <footer>급식 정보는 NEIS 공개 데이터에 기반합니다.</footer>
     </FluentProvider>
   );
