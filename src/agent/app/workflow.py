@@ -51,7 +51,11 @@ class CopilotSpecialistExecutor(Executor):
     ) -> None:
         agent = self._agent_factory(self.id, self._instructions)
         async with _started_agent(agent) as running:
-            response = await running.run(request.messages)
+            response = await _run_with_json_retry(
+                running,
+                request.messages,
+                SpecialistEvaluation,
+            )
         await ctx.send_message(
             AgentExecutorResponse(
                 self.id,
@@ -99,9 +103,11 @@ class JudgeAggregator(Executor):
         }
         judge = self._agent_factory(self.id, self._instructions)
         async with _started_agent(judge) as running:
-            response = await running.run(
+            response = await _run_with_json_retry(
+                running,
                 "다음 결과를 품질 검증하고 JSON 최종 보고서를 작성하세요.\n"
-                + json.dumps(payload, ensure_ascii=False)
+                + json.dumps(payload, ensure_ascii=False),
+                JudgeReport,
             )
         judge = _parse_model(response.text, JudgeReport)
         if judge.winner != payload["requiredWinner"]:
@@ -211,13 +217,15 @@ def _parse_model(text: str, model: type[Any]) -> Any:
     try:
         return model.model_validate_json(candidate)
     except ValueError as exc:
-        start = candidate.find("{")
-        end = candidate.rfind("}")
-        if start >= 0 and end > start:
+        decoder = json.JSONDecoder()
+        for start, character in enumerate(candidate):
+            if character != "{":
+                continue
             try:
-                return model.model_validate_json(candidate[start : end + 1])
-            except ValueError:
-                pass
+                value, _ = decoder.raw_decode(candidate[start:])
+                return model.model_validate(value)
+            except (json.JSONDecodeError, ValueError):
+                continue
         raise EvaluationWorkflowError(
             f"{model.__name__} JSON response is invalid."
         ) from exc
@@ -236,3 +244,26 @@ async def _started_agent(agent: Any) -> AsyncIterator[Any]:
             yield running
     else:
         yield agent
+
+
+async def _run_with_json_retry(
+    running: Any,
+    request: Any,
+    model: type[Any],
+) -> Any:
+    response = await running.run(request)
+    try:
+        _parse_model(response.text, model)
+        return response
+    except EvaluationWorkflowError:
+        schema = json.dumps(
+            model.model_json_schema(by_alias=True),
+            ensure_ascii=False,
+        )
+        response = await running.run(
+            "이전 응답이 요구된 JSON 스키마와 맞지 않습니다. "
+            "설명이나 코드 펜스 없이 다음 JSON Schema를 만족하는 객체만 다시 반환하세요.\n"
+            + schema
+        )
+        _parse_model(response.text, model)
+        return response

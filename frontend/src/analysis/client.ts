@@ -71,6 +71,16 @@ class HttpAnalysisAgentClient implements AnalysisAgentClient {
         },
         onRunErrorEvent: ({ event }) => {
           runError = event.message;
+          onState({
+            ...state,
+            phase: "error",
+            result: null,
+            error: {
+              code: event.code ?? "ANALYSIS_FAILED",
+              message: event.message,
+              retryable: true,
+            },
+          });
         },
       },
     );

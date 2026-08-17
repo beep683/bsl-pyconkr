@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 from datetime import date
 from typing import Any, Protocol
 from urllib.parse import urlsplit, urlunsplit
@@ -9,6 +10,8 @@ from urllib.parse import urlsplit, urlunsplit
 from agent_framework import MCPStreamableHTTPTool
 
 from .schemas import MealData, SchoolCandidate
+
+logger = logging.getLogger(__name__)
 
 
 class LunchDataError(RuntimeError):
@@ -101,6 +104,7 @@ class McpLunchDataSource:
                 raise LunchDataError(
                     "한 학교 이상에서 선택 날짜의 중식 데이터가 없습니다."
                 ) from exc
+            logger.exception("MCP tool call failed: tool=%s", name)
             raise LunchDataError(f"MCP 도구 {name} 호출에 실패했습니다.") from exc
         return _decode_tool_result(result)
 

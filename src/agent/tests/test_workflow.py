@@ -16,9 +16,11 @@ from app.workflow import build_evaluation_workflow, evaluation_prompt
 
 
 class FakeChatClient:
-    def __init__(self) -> None:
+    def __init__(self, invalid_first: bool = False) -> None:
         self.active = 0
         self.max_active = 0
+        self.invalid_first = invalid_first
+        self.calls: dict[str, int] = {}
 
     async def get_response(
         self,
@@ -35,6 +37,13 @@ class FakeChatClient:
         await asyncio.sleep(0.01)
         self.active -= 1
         instructions = str((options or {}).get("instructions", ""))
+        self.calls[instructions] = self.calls.get(instructions, 0) + 1
+        if self.invalid_first and self.calls[instructions] == 1:
+            return ChatResponse(
+                messages=[
+                    Message(role="assistant", contents=["응답 형식이 올바르지 않습니다."])
+                ]
+            )
         if "Final Judge" in instructions:
             payload = {
                 "winner": "school_a",
@@ -121,3 +130,30 @@ async def test_specialists_run_concurrently_before_final_judge() -> None:
     assert result.school_a_score.total == 100
     assert result.school_b_score.total == 60
     assert result.judge.winner == "school_a"
+
+
+async def test_invalid_json_is_retried_once() -> None:
+    client = FakeChatClient(invalid_first=True)
+    instructions = {
+        EvaluationArea.NUTRITION: "# Nutrition Agent",
+        EvaluationArea.HEALTH: "# Health Agent",
+        EvaluationArea.MENU_QUALITY: "# Menu Quality Agent",
+    }
+
+    def factory(name: str, agent_instructions: str) -> Agent:
+        return Agent(client, name=name, instructions=agent_instructions)
+
+    meal_a = meal("1", "가학교")
+    meal_b = meal("2", "나학교")
+    workflow = build_evaluation_workflow(
+        factory,
+        instructions,
+        "# Final Judge",
+        meal_a,
+        meal_b,
+    )
+
+    events = await workflow.run(evaluation_prompt(meal_a, meal_b))
+
+    assert isinstance(events.get_outputs()[0], AnalysisResult)
+    assert set(client.calls.values()) == {2}

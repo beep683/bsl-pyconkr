@@ -122,14 +122,19 @@ export default function AnalysisPage() {
   ].includes(state.phase);
 
   useEffect(() => {
-    const activeClient = client.current;
-    if (!activeClient) return;
+    const activeClient = client.current ?? createAnalysisAgentClient();
+    client.current = activeClient;
     activeClient.loadCandidates(setState).catch((error: unknown) => {
       setRequestError(
         error instanceof Error ? error.message : "학교 후보를 불러오지 못했습니다.",
       );
     });
-    return () => activeClient.abort();
+    return () => {
+      activeClient.abort();
+      if (client.current === activeClient) {
+        client.current = null;
+      }
+    };
   }, []);
 
   useEffect(() => {
