@@ -72,6 +72,7 @@ React DayPicker는 급식 조회 화면에서 `range` 모드의 Date Range Picke
 | 영역 | 기술 | 사용 목적 |
 |---|---|---|
 | 언어 | Python 3.12 이상 | 백엔드 구현 |
+| 패키지·프로젝트 관리 | uv | 의존성 선언, 잠금, 가상 환경 동기화 및 명령 실행 |
 | API 프레임워크 | FastAPI | REST API와 OpenAPI 호환 요청·응답 처리 |
 | 데이터 검증 | Pydantic v2 | 내부 스키마 및 환경 변수 검증 |
 | HTTP 클라이언트 | HTTPX AsyncClient | 비동기 NEIS API 호출 |
@@ -80,11 +81,32 @@ React DayPicker는 급식 조회 화면에서 `range` 모드의 Date Range Picke
 
 배틀 API는 두 학교의 NEIS 요청을 `asyncio.gather`로 병렬 실행한다. 한 요청의 실패를 데이터 없음으로 바꾸지 않으며, 외부 API 실패는 명시적인 게이트웨이 오류로 반환한다.
 
+#### 3.2.1 Python 패키지 관리 및 앱 실행
+
+- `backend/pyproject.toml`을 Python 버전, 런타임 의존성, 개발 의존성 및 도구 설정의 단일 원본으로 사용한다.
+- `backend/uv.lock`을 버전 관리하고 로컬 개발, CI 및 컨테이너 빌드에서 동일한 잠금 파일을 사용한다.
+- 개발 환경은 `backend/`에서 `uv sync --all-groups`로 생성·동기화한다. `uv`가 관리하는 `.venv`는 버전 관리하지 않는다.
+- 의존성은 `uv add <package>`, 개발 전용 의존성은 `uv add --dev <package>`로 변경하고, `uv pip install`이나 별도 `requirements.txt`를 사용하지 않는다.
+- 로컬 개발 서버는 `backend/`에서 다음 명령으로 실행한다.
+
+  ```bash
+  uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+  ```
+
+- 프로덕션 및 컨테이너에서는 자동 reload를 사용하지 않으며, 의존성 동기화 후 다음 명령으로 실행한다.
+
+  ```bash
+  uv run --no-sync uvicorn app.main:app --host 0.0.0.0 --port 8000
+  ```
+
+- 백엔드 정적 검사와 테스트를 포함한 Python 도구는 활성화된 셸 환경에 의존하지 않도록 모두 `uv run <command>` 형식으로 실행한다.
+
 ### 3.3 컨테이너
 
 - 프론트엔드는 Node.js 빌드 단계와 Nginx 실행 단계로 구성된 멀티 스테이지 이미지를 사용한다.
 - Nginx는 정적 파일을 제공하고 `/api/` 요청을 백엔드 서비스로 프록시한다.
-- 백엔드는 Python slim 이미지를 사용하고 비루트 사용자로 실행한다.
+- 백엔드는 Python slim 이미지에 `uv`를 설치하고 비루트 사용자로 실행한다.
+- 백엔드 이미지 빌드 시 `pyproject.toml`과 `uv.lock`을 먼저 복사한 뒤 `uv sync --frozen --no-dev`로 잠긴 런타임 의존성만 설치한다.
 - NEIS API 키는 백엔드 컨테이너에만 환경 변수로 주입한다.
 
 ## 4. 프론트엔드 설계
@@ -621,7 +643,8 @@ GET /api/v1/meals?educationOfficeCode=B10&schoolCode=7010536&from=2026-08-17&to=
 │   │   ├── unit/
 │   │   └── integration/
 │   ├── Dockerfile
-│   └── pyproject.toml
+│   ├── pyproject.toml
+│   └── uv.lock
 ├── frontend/
 │   ├── src/
 │   │   ├── api/
@@ -675,7 +698,7 @@ GET /api/v1/meals?educationOfficeCode=B10&schoolCode=7010536&from=2026-08-17&to=
 - 프론트엔드 Nginx는 `/api`를 `http://backend:8000`으로 프록시한다.
 - 백엔드 healthcheck는 `/api/v1/health`를 사용한다.
 - 프론트엔드는 백엔드 healthcheck가 성공한 후 시작한다.
-- 이미지 빌드는 잠금 파일을 사용해 재현 가능해야 한다.
+- 백엔드 이미지는 `uv.lock`, 프론트엔드 이미지는 해당 패키지 관리자의 잠금 파일을 사용해 재현 가능하게 빌드한다.
 
 ## 11. 테스트 전략
 
@@ -784,9 +807,10 @@ E2E 환경의 백엔드는 실제 NEIS 대신 결정적인 fixture를 반환하�
 1. `src/openapi.json` 구문과 계약을 검증한다.
 2. OpenAPI 기반 프론트엔드 타입이 최신인지 검사한다.
 3. 프론트엔드 TypeScript 타입 검사와 통합 테스트를 실행한다.
-4. 백엔드 정적 검사와 단위·통합 테스트를 실행한다.
-5. 프론트엔드 및 백엔드 컨테이너 이미지를 빌드한다.
-6. Docker Compose 환경에서 Playwright E2E 테스트를 실행한다.
+4. `uv sync --frozen --all-groups`로 백엔드 환경을 동기화한다.
+5. `uv run`으로 백엔드 정적 검사와 단위·통합 테스트를 실행한다.
+6. 프론트엔드 및 백엔드 컨테이너 이미지를 빌드한다.
+7. Docker Compose 환경에서 Playwright E2E 테스트를 실행한다.
 
 한 단계라도 실패하면 이후 배포 단계로 진행하지 않는다.
 
