@@ -24,6 +24,37 @@ NEIS 공개 API를 활용해 초중고 급식 메뉴를 조회하고 AI 에이�
 
 이 저장소를 포크하는 대신 템플릿으로 새 저장소를 만든 후 [개발 환경 설정](docs/00-setup.md)의 안내를 따라 진행하세요.
 
+### 애플리케이션 실행
+
+NEIS Open API 키를 발급받은 뒤 `.env.example`을 `.env`로 복사하고
+`NEIS_API_KEY` 값을 입력합니다. 전체 애플리케이션은 Docker Compose로 실행할 수
+있습니다.
+
+```powershell
+Copy-Item .env.example .env
+docker compose up --build
+```
+
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+브라우저에서 `http://localhost:3000`에 접속합니다. 프론트엔드 개발 서버는
+`frontend`에서 `npm run dev`로 실행합니다. 백엔드는 저장소 루트에서 다음과
+같이 uv 격리 환경으로 실행합니다.
+
+```powershell
+uv sync --project backend --extra dev
+uv run --project backend uvicorn app.main:app --reload
+```
+
+백엔드 테스트도 전역 Python 환경을 변경하지 않고 실행합니다.
+
+```powershell
+uv run --project backend pytest
+```
+
 > [!TIP]
 > 바로 시작하려면 [이 템플릿으로 새 저장소를 만드세요](https://github.com/new?template_name=battle-school-lunch-workshop&template_owner=devkimchi).
 

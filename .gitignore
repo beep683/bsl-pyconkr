@@ -62,6 +62,8 @@ coverage.xml
 __pypackages__/
 .pdm.toml
 poetry.toml
+playwright-report/
+test-results/
 
 # Editors
 .vscode/*

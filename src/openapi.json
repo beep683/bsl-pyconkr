@@ -1,0 +1,483 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "급식 배틀 API",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/v1/health": {
+      "get": {
+        "summary": "Health",
+        "operationId": "health_api_v1_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Health Api V1 Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/schools": {
+      "get": {
+        "summary": "Search Schools",
+        "operationId": "search_schools_api_v1_schools_get",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100,
+              "title": "Query"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Pagesize"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchoolSearchResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/meals": {
+      "get": {
+        "summary": "Get Meals",
+        "operationId": "get_meals_api_v1_meals_get",
+        "parameters": [
+          {
+            "name": "educationOfficeCode",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "title": "Educationofficecode"
+            }
+          },
+          {
+            "name": "schoolCode",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "title": "Schoolcode"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "title": "From"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "title": "To"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MealRangeResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "Meal": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "mealType": {
+            "type": "string",
+            "const": "lunch",
+            "title": "Mealtype",
+            "default": "lunch"
+          },
+          "menuItems": {
+            "items": {
+              "$ref": "#/components/schemas/MenuItem"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Menuitems"
+          },
+          "caloriesKcal": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Calorieskcal"
+          },
+          "servings": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Servings"
+          },
+          "nutrition": {
+            "items": {
+              "$ref": "#/components/schemas/NutritionItem"
+            },
+            "type": "array",
+            "title": "Nutrition"
+          },
+          "origins": {
+            "items": {
+              "$ref": "#/components/schemas/OriginItem"
+            },
+            "type": "array",
+            "title": "Origins"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "menuItems",
+          "caloriesKcal",
+          "servings",
+          "nutrition",
+          "origins"
+        ],
+        "title": "Meal"
+      },
+      "MealDay": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "available",
+              "noData"
+            ],
+            "title": "Status"
+          },
+          "meal": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Meal"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "status",
+          "meal"
+        ],
+        "title": "MealDay"
+      },
+      "MealRangeResponse": {
+        "properties": {
+          "school": {
+            "$ref": "#/components/schemas/School"
+          },
+          "from": {
+            "type": "string",
+            "format": "date",
+            "title": "From"
+          },
+          "to": {
+            "type": "string",
+            "format": "date",
+            "title": "To"
+          },
+          "days": {
+            "items": {
+              "$ref": "#/components/schemas/MealDay"
+            },
+            "type": "array",
+            "title": "Days"
+          }
+        },
+        "type": "object",
+        "required": [
+          "school",
+          "from",
+          "to",
+          "days"
+        ],
+        "title": "MealRangeResponse"
+      },
+      "MenuItem": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "allergenCodes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Allergencodes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "allergenCodes"
+        ],
+        "title": "MenuItem"
+      },
+      "NutritionItem": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "amount": {
+            "type": "number",
+            "title": "Amount"
+          },
+          "unit": {
+            "type": "string",
+            "title": "Unit"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "amount",
+          "unit"
+        ],
+        "title": "NutritionItem"
+      },
+      "OriginItem": {
+        "properties": {
+          "ingredient": {
+            "type": "string",
+            "title": "Ingredient"
+          },
+          "origin": {
+            "type": "string",
+            "title": "Origin"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ingredient",
+          "origin"
+        ],
+        "title": "OriginItem"
+      },
+      "School": {
+        "properties": {
+          "educationOfficeCode": {
+            "type": "string",
+            "title": "Educationofficecode"
+          },
+          "schoolCode": {
+            "type": "string",
+            "title": "Schoolcode"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "schoolType": {
+            "type": "string",
+            "title": "Schooltype"
+          },
+          "region": {
+            "type": "string",
+            "title": "Region"
+          }
+        },
+        "type": "object",
+        "required": [
+          "educationOfficeCode",
+          "schoolCode",
+          "name",
+          "schoolType",
+          "region"
+        ],
+        "title": "School"
+      },
+      "SchoolSearchResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/School"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "pageSize": {
+            "type": "integer",
+            "title": "Pagesize"
+          },
+          "totalCount": {
+            "type": "integer",
+            "title": "Totalcount"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "totalCount"
+        ],
+        "title": "SchoolSearchResponse"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

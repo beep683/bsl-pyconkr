@@ -46,18 +46,19 @@ jobs:
         if: ${{ hashFiles('backend/pyproject.toml') != '' }}
         with:
           python-version: "3.12"
-          cache: pip
-          cache-dependency-path: |
-            backend/pyproject.toml
-            backend/requirements*.txt
+      - uses: astral-sh/setup-uv@v7
+        if: ${{ hashFiles('backend/pyproject.toml') != '' }}
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
       - name: Install dependencies
         if: ${{ hashFiles('backend/pyproject.toml') != '' }}
         working-directory: backend
-        run: python -m pip install -e ".[dev]"
+        run: uv sync --extra dev --locked
       - name: Test
         if: ${{ hashFiles('backend/pyproject.toml') != '' }}
         working-directory: backend
-        run: pytest
+        run: uv run pytest
       - name: Await backend scaffold
         if: ${{ hashFiles('backend/pyproject.toml') == '' }}
         run: echo "backend/pyproject.toml is not present yet; skipping Python checks."
