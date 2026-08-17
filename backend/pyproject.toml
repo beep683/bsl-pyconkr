@@ -7,7 +7,7 @@ name = "school-lunch-api"
 version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = [
-  "fastapi>=0.115,<1",
+  "fastapi>=0.141.1,<1",
   "httpx>=0.28,<1",
   "pydantic-settings>=2.7,<3",
   "tzdata>=2025.1",
